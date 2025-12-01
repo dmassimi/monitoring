@@ -1,6 +1,7 @@
 # BWCE Observability Stack: Logs & Traces Implementation
 
-This document outlines the architecture, configuration, and Grafana dashboard setup for monitoring BWCE applications using Fluent Bit, OpenTelemetry Collector, Loki, and Tempo.
+This document outlines the architecture, configuration, and Grafana dashboard setup for monitoring BWCE applications using Fluent Bit, OpenTelemetry Collector, Loki, Tempo, and Prometheus.
+
 
 ## 1. Prerequisites & Requirements
 
@@ -14,6 +15,7 @@ Before implementing this stack, ensure the following infrastructure and software
 - Grafana: Version 9.4+ (Recommended for full TraceQL support).
 - Loki: Version 2.8+.
 - Tempo: Version 2.0+.
+- Prometheus: Version 2.45+ (For Metrics).
 
 **Network & Ports**
 
@@ -24,6 +26,7 @@ Ensure the following ports are open within the Kubernetes cluster or host networ
 - 4318 (TCP): OTLP HTTP receiver (Optional backup).
 - 3100 (TCP): Loki HTTP API (Used by OTel Collector to push logs).
 - 3200 (TCP): Tempo HTTP/gRPC (Used by OTel Collector to push traces).
+- 9090 (TCP): Prometheus HTTP API (Used by Grafana).
 
 **Configurations and files**
 
@@ -38,17 +41,93 @@ volumes:
 
 The following diagram illustrates the data flow from the application layer through collection and storage, ending at the visualization layer.
 
-![Graph](./img/graph.png)
+
+```mermaid
+graph LR
+    %% --- Modern Pastel Styles ---
+    classDef app fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
+    classDef collector fill:#fff3e0,stroke:#ff9800,stroke-width:2px,color:#e65100
+    classDef storage fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px,color:#4a148c
+    classDef viz fill:#e0f2f1,stroke:#009688,stroke-width:2px,color:#004d40
+
+    %% --- Nodes ---
+    subgraph App_Layer [Application Layer]
+        direction TB
+        BWCE([BWCE App]):::app
+    end
+
+    subgraph Col_Layer [Collection Layer]
+        direction TB
+        FB([Fluent Bit]):::collector
+        OTEL([OTel Collector]):::collector
+    end
+
+    subgraph Sto_Layer [Storage Layer]
+        direction TB
+        LOKI[(Loki - Logs)]:::storage
+        TEMPO[(Tempo - Traces)]:::storage
+        PROM[(Prometheus - Metrics)]:::storage
+    end
+
+    subgraph Viz_Layer [Visualization Layer]
+        direction TB
+        GRAFANA{{Grafana}}:::viz
+    end
+
+    %% --- Links ---
+    %% 0: Traces (Blue)
+    BWCE -- "Traces (OTLP)" --> OTEL
+    
+    %% 1: Logs File (Green/Dotted)
+    BWCE -. "Logs (File)" .-> FB
+    
+    %% 2: Logs Forward (Green)
+    FB -- "Logs (OTLP)" --> OTEL
+
+    %% 3: Metrics (Orange)
+    BWCE -- "Metrics (OTLP)" --> OTEL
+    
+    %% 4: Traces Export (Blue)
+    OTEL -- "Traces (OTLP)" --> TEMPO
+    
+    %% 5: Logs Export (Green)
+    OTEL -- "Logs (OTLP)" --> LOKI
+
+    %% 6: Metrics Export (Orange)
+    OTEL -- "Metrics (Prom)" --> PROM
+    
+    %% 7: Log Query (Green)
+    GRAFANA -- "LogQL" --> LOKI
+
+    %% 8: Trace Query (Blue)
+    GRAFANA -- "TraceQL" --> TEMPO
+
+    %% 9: PromQL Query (Orange)
+    GRAFANA -- "PromQL" --> PROM
+
+    %% --- Link Styling ---
+    %% Traces Blue
+    linkStyle 0,4,8 stroke:#2196f3,stroke-width:2px
+    
+    %% Logs Green
+    linkStyle 1,2,5,7 stroke:#4caf50,stroke-width:2px
+
+    %% Metrics Orange
+    linkStyle 3,6,9 stroke:#ff9800,stroke-width:2px
+```
+
 
 ### Data Flow Logic
 
 1. **Traces:** BWCE sends traces directly to the OTel Collector via OTLP (gRPC/HTTP).
 
-3. **Logs:** BWCE writes logs to disk/stdout. Fluent Bit tails these files, converts them to OTLP, and forwards them to the OTel Collector.
+2. **Logs:** BWCE writes logs to disk/stdout. Fluent Bit tails these files, converts them to OTLP, and forwards them to the OTel Collector.
 
-4. **Routing:** The OTel Collector acts as a central router, sending Logs to **Loki** and Traces to **Tempo**.
+3. **Metrics:** BWCE sends metrics via OTLP to the Collector, which exposes/pushes them to **Prometheus**.
 
-5. **Visualization:** Grafana queries Loki (LogQL) and Tempo (TraceQL) to display the data.
+4. **Routing:** The OTel Collector acts as a central router, sending Logs to **Loki**, Traces to **Tempo**, and Metrics to **Prometheus**.
+
+5. **Visualization:** Grafana queries Loki (LogQL), Tempo (TraceQL), and Prometheus (PromQL).
 
 ## 2. Component Configuration
 
@@ -58,9 +137,18 @@ The following diagram illustrates the data flow from the application layer throu
 
 Env var **`BW_JAVA_OPTS`**:
 
-```properties
-bw.engine.opentelemetry.enable=true
-bw.engine.opentelemetry.span.exporter.endpoint=http://otel-collector:4317
+```yaml
+environment:
+      # Injecting the OTel configuration via BW_JAVA_OPTS
+      - BW_JAVA_OPTS=
+          -Dbw.engine.opentelemetry.enable=true
+          -Dbw.engine.opentelemetry.metric.enable=true
+          -Dbw.engine.opentelemetry.publish.phys.measurement=true
+          -Dbw.engine.opentelemetry.span.exporter.endpoint=http://otel_collector:4317
+          -Dbw.engine.opentelemetry.metric.exporter.endpoint=http://otel_collector:4317
+          -Dbw.engine.opentelemetry.protocol=grpc
+          -Dbw.engine.opentelemetry.resource.attributes=service.name=order-service-container
+          -Dbw.frwk.event.subscriber.instrumentation.enabled=true
 ```
 
 ### B. Fluent Bit (Logs)
@@ -103,6 +191,11 @@ exporters:
     tls: { insecure: true }
   loki: # To Loki
     endpoint: "http://loki:3100/loki/api/v1/push"
+  prometheus: # To Prometheus (Scrape Target)
+    endpoint: "0.0.0.0:8889"
+    namespace: "bw_metrics"
+    send_timestamps: true
+    metric_expiration: 180m
 
 service:
   pipelines:
@@ -112,6 +205,9 @@ service:
     logs:
       receivers: [otlp]
       exporters: [loki]
+    metrics:
+      receivers: [otlp]
+      exporters: [prometheus]
 ```
 
 ## 3. Grafana Dashboard Setup
@@ -172,6 +268,33 @@ This panel lists traces matching the specific Order Management service and "Log"
     ]
   }
   ```
+### Panel 3: Metrics (Prometheus)
+This panel shows the total number of process instances created.
+
+* **DataSource:** Prometheus
+
+* **Query** (PromQL):
+
+```promql
+sum(bw_engine_process_instance_count) by (service_name)
+```
+
+* **Panel JSON Model:**
+
+```json
+{
+  "type": "timeseries",
+  "title": "Total Job Count",
+  "datasource": { "uid": "${PROMETHEUS_UID}" },
+  "targets": [
+    {
+      "expr": "sum(bw_engine_process_instance_count) by (service_name)",
+      "refId": "A",
+      "legendFormat": "{{service_name}}"
+    }
+  ]
+}
+```
 
 ## 4. Linking Logs to Traces
 

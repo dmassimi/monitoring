@@ -20,6 +20,10 @@ exporters:
   # Export Metrics to Prometheus
   prometheus:
     endpoint: "0.0.0.0:8889"
+    namespace: "bw_metrics"
+    send_timestamps: true
+    metric_expiration: 180m
+
 
 processors:
   batch:

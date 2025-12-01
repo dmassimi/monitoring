@@ -24,6 +24,77 @@
   "panels": [
     {
       "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.2.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "bw_metrics_COMPLETED_JOB_COUNT{AppName=\"order-mgmt.application\"}",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Job Completed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
@@ -60,7 +131,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 5
       },
       "id": 3,
       "options": {
@@ -99,7 +170,7 @@
               "valueType": "string"
             }
           ],
-          "limit": 20,
+          "limit": 100,
           "query": "{ resource.service.name = \"order-mgmt.application:1.0\" && span.ActivityName = \"Log\" }",
           "queryType": "traceql",
           "refId": "A",
@@ -157,7 +228,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 5
       },
       "id": 4,
       "options": {
@@ -196,7 +267,7 @@
               "scope": "span"
             }
           ],
-          "limit": 20,
+          "limit": 100,
           "queryType": "traceqlSearch",
           "refId": "A",
           "tableType": "traces"
@@ -214,7 +285,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 16
       },
       "id": 1,
       "options": {
@@ -250,13 +321,13 @@
     "list": []
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "My Dashboard - BWCE",
   "uid": "e431037e-78c2-401a-99cc-c72f94a802ff",
-  "version": 6,
+  "version": 5,
   "weekStart": ""
 }

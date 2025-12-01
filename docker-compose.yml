@@ -96,9 +96,18 @@ services:
     networks:
       - logging_net
     environment:
+      # Injecting the OTel configuration via BW_JAVA_OPTS
+      - BW_JAVA_OPTS=
+          -Dbw.engine.opentelemetry.enable=true
+          -Dbw.engine.opentelemetry.metric.enable=true
+          -Dbw.engine.opentelemetry.publish.phys.measurement=true
+          -Dbw.engine.opentelemetry.span.exporter.endpoint=http://otel_collector:4317
+          -Dbw.engine.opentelemetry.metric.exporter.endpoint=http://otel_collector:4317
+          -Dbw.engine.opentelemetry.protocol=grpc
+          -Dbw.engine.opentelemetry.resource.attributes=service.name=order-service-container
+          -Dbw.frwk.event.subscriber.instrumentation.enabled=true
       - BW_PROFILE=token
       - LICENSE_SOURCE=/data/license
-      - BW_JAVA_OPTS=-Dbw.engine.opentelemetry.enable=true -Dbw.engine.opentelemetry.span.exporter.endpoint=http://otel_collector:4317
     volumes:
       - C:/Users/dmassimi/containers/resources/addons/license:/data/license:ro
     ports:
