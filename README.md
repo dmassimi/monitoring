@@ -172,6 +172,11 @@ This panel lists traces matching the specific Order Management service and "Log"
     ]
   }
   ```
+### Sample Dashboard
+You can find in dashboard/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
+
+
+![Screen](./img/grafana-screen.png)
 
 ## 4. Linking Logs to Traces
 
