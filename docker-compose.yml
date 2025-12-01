@@ -50,7 +50,6 @@ services:
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
-      - ./dashboards/bwce-dashboard.json:/var/lib/grafana/dashboards/bwce-dashboard.json
     networks:
       - logging_net
     depends_on:
