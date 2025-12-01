@@ -276,24 +276,25 @@ This panel shows the total number of process instances created.
 * **Query** (PromQL):
 
 ```promql
-sum(bw_engine_process_instance_count) by (service_name)
+bw_metrics_COMPLETED_JOB_COUNT{AppName="order-mgmt.application"}
 ```
 
 * **Panel JSON Model:**
 
 ```json
 {
-  "type": "timeseries",
+  "type": "stat",
   "title": "Total Job Count",
   "datasource": { "uid": "${PROMETHEUS_UID}" },
   "targets": [
     {
-      "expr": "sum(bw_engine_process_instance_count) by (service_name)",
+      "expr": "bw_metrics_COMPLETED_JOB_COUNT{AppName=\"order-mgmt.application\"}",
       "refId": "A",
-      "legendFormat": "{{service_name}}"
+      "legendFormat": "{{AppName}}"
     }
   ]
 }
+
 ```
 
 ## 4. Linking Logs to Traces
