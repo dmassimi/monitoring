@@ -172,11 +172,6 @@ This panel lists traces matching the specific Order Management service and "Log"
     ]
   }
   ```
-### Sample Dashboard
-You can find in dashboard/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
-
-
-![Screen](./img/grafana-screen.png)
 
 ## 4. Linking Logs to Traces
 
@@ -195,3 +190,9 @@ To enable the "Split View" feature in Grafana (clicking a log to see the trace),
    * **Query:** `${__value.raw}`
 
    * **Internal Link:** Enable this and select your **Tempo** datasource.
+
+## 5. Sample Dashboard
+You can find in dashboard/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
+
+
+![Screen](./img/grafana-screen.png)
