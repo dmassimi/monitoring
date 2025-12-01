@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # 1. Loki (Log Storage)
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - logging_net
+
+  # 2. Tempo (Trace Storage)
+  tempo:
+    image: grafana/tempo:2.3.1
+    container_name: tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml:ro
+    ports:
+      - "3200:3200"
+      - "4317"
+    networks:
+      - logging_net
+
+  # 3. Prometheus (Metrics Storage)
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --enable-feature=exemplar-storage
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - logging_net
+
+  # 4. Grafana (Visualization Dashboard)
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./dashboards/bwce-dashboard.json:/var/lib/grafana/dashboards/bwce-dashboard.json
+    networks:
+      - logging_net
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+
+  # 5. OpenTelemetry Collector (Router)
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib:0.87.0
+    container_name: otel_collector
+    command: ["--config=/etc/otelcol-config.yaml"]
+    volumes:
+      - ./otelcol-config.yaml:/etc/otelcol-config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "4317:4317"
+    networks:
+      - logging_net
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+
+  # 6. Fluent Bit (Log Agent)
+  fluent_bit:
+    image: fluent/fluent-bit:latest
+    container_name: fluent_bit
+    user: root
+    networks:
+      - logging_net
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - fluent_bit_db:/var/log
+      - ./parsers.conf:/fluent-bit/etc/parsers.conf:ro
+    depends_on:
+      - otel_collector
+
+  # 7. BWCE Application (Source)
+  app_service:
+    image: maven_test:6.12.0
+    container_name: maven-test-6.12
+    networks:
+      - logging_net
+    environment:
+      - BW_PROFILE=token
+      - LICENSE_SOURCE=/data/license
+      - BW_JAVA_OPTS=-Dbw.engine.opentelemetry.enable=true -Dbw.engine.opentelemetry.span.exporter.endpoint=http://otel_collector:4317
+    volumes:
+      - C:/Users/dmassimi/containers/resources/addons/license:/data/license:ro
+    ports:
+      - "8080:8080"
+
+networks:
+  logging_net:
+    driver: bridge
+
+volumes:
+  fluent_bit_db:
