@@ -8,7 +8,7 @@ Before implementing this stack, ensure the following infrastructure and software
 
 **Software Versions**
 
-- TIBCO BWCE: Version 2.8.0 or higher (Required for native OpenTelemetry support)
+- TIBCO BW6: Version 2.8.0 or higher (Required for native OpenTelemetry support)
 - OpenTelemetry Collector: Contrib distribution (Required for the loki exporter; the core distribution does not include it).
 - Fluent Bit: Version 1.9.0+ (Required for the opentelemetry output plugin).
 - Grafana: Version 9.4+ (Recommended for full TraceQL support).
@@ -27,7 +27,7 @@ Ensure the following ports are open within the Kubernetes cluster or host networ
 
 **Configurations and files**
 
-- License file to start BW6 applciation (if version >=6.12). In this repository is mounted from local folder (volume in app-service of docker-compose)
+- License file to start BW6 application (if version >=6.12). In this repository is mounted from local folder (volume in app-service of docker-compose)
 ```yaml
 volumes:
       - C:/Users/dmassimi/containers/resources/addons/license:/data/license:ro
