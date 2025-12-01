@@ -192,7 +192,7 @@ To enable the "Split View" feature in Grafana (clicking a log to see the trace),
    * **Internal Link:** Enable this and select your **Tempo** datasource.
 
 ## 5. Sample Dashboard
-You can find in dashboard/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
+You can find in ./dashboards/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
 
 
 ![Screen](./img/grafana-screen.png)
