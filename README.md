@@ -191,8 +191,33 @@ To enable the "Split View" feature in Grafana (clicking a log to see the trace),
 
    * **Internal Link:** Enable this and select your **Tempo** datasource.
 
-## 5. Sample Dashboard
-You can find in ./dashboards/bwce-monitoring.json a sample dashboard. Just import in Grafana (http://localhost:3000/dashboard/import)
+## 5. Docker Compose Operations
+
+You can run all components using the following commands:
+
+**Start the stack:**
+
+```bash
+docker compose up -d
+```
+
+**Stop the stack:**
+
+```bash
+docker compose down
+```
+
+## 6. Sample Dashboard
+
+A sample dashboard is provided in the repository at `./dashboards/bwce-monitoring.json`.
+
+**To import it:**
+
+1. Open Grafana at [http://localhost:3000/dashboard/import](http://localhost:3000/dashboard/import).
+
+2. Upload the JSON file or paste its content.
+
+3. Select the appropriate Loki and Tempo data sources.
 
 
 ![Screen](./img/grafana-screen.png)
