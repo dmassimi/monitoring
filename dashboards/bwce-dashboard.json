@@ -58,9 +58,10 @@
       },
       "id": 5,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -69,8 +70,8 @@
           "fields": "",
           "values": false
         },
-        "textMode": "auto",
-        "wideLayout": true
+        "showUnfilled": true,
+        "valueMode": "color"
       },
       "pluginVersion": "10.2.2",
       "targets": [
@@ -81,17 +82,34 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "bw_metrics_COMPLETED_JOB_COUNT{AppName=\"order-mgmt.application\"}",
+          "expr": "app_metrics_TOTAL_JOB_COUNT{AppName=\"order-mgmt.application\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "__auto",
+          "legendFormat": "BWCE",
           "range": true,
           "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "expr": "app_metrics_flogo_flow_executions_total{app_name=\"order-app\", state=\"completed\", flow_name=\"MCI-SaveOrder\"}",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "Flogo",
+          "range": true,
+          "refId": "B",
           "useBackend": false
         }
       ],
       "title": "Job Completed",
-      "type": "stat"
+      "type": "bargauge"
     },
     {
       "datasource": {
@@ -128,8 +146,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
+        "h": 6,
+        "w": 24,
         "x": 0,
         "y": 5
       },
@@ -161,18 +179,15 @@
             },
             {
               "id": "service-name",
-              "operator": "=",
+              "operator": "=~",
               "scope": "resource",
               "tag": "service.name",
-              "value": [
-                "order-mgmt.application:1.0"
-              ],
               "valueType": "string"
             }
           ],
           "limit": 100,
           "query": "{ resource.service.name = \"order-mgmt.application:1.0\" && span.ActivityName = \"Log\" }",
-          "queryType": "traceql",
+          "queryType": "traceqlSearch",
           "refId": "A",
           "tableType": "traces"
         }
@@ -225,12 +240,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 5
+        "h": 6,
+        "w": 5,
+        "x": 0,
+        "y": 11
       },
-      "id": 4,
+      "id": 8,
       "options": {
         "barRadius": 0.15,
         "barWidth": 0.75,
@@ -241,7 +256,7 @@
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "orientation": "auto",
         "showValue": "auto",
@@ -264,7 +279,28 @@
             {
               "id": "673b3f1a",
               "operator": "=",
-              "scope": "span"
+              "scope": "span",
+              "tag": "ActivityName",
+              "value": "Reply",
+              "valueType": "string"
+            },
+            {
+              "id": "service-name",
+              "operator": "=",
+              "scope": "resource",
+              "tag": "service.name",
+              "value": [
+                "order-mgmt.application:1.0"
+              ],
+              "valueType": "string"
+            },
+            {
+              "id": "span-name",
+              "operator": "=",
+              "scope": "span",
+              "tag": "name",
+              "value": [],
+              "valueType": "string"
             }
           ],
           "limit": 100,
@@ -273,7 +309,126 @@
           "tableType": "traces"
         }
       ],
-      "title": "Duration",
+      "title": "Duration BWCE Rest",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-YlRd"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 33,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 2,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 4,
+        "x": 5,
+        "y": 11
+      },
+      "id": 4,
+      "options": {
+        "barRadius": 0.15,
+        "barWidth": 0.75,
+        "colorByField": "Duration",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "startTime",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "filters": [
+            {
+              "id": "673b3f1a",
+              "operator": "=",
+              "scope": "span",
+              "tag": "ActivityName",
+              "value": [
+                "Timer"
+              ],
+              "valueType": "string"
+            },
+            {
+              "id": "service-name",
+              "operator": "=",
+              "scope": "resource",
+              "tag": "service.name",
+              "value": [
+                "order-mgmt.application:1.0"
+              ],
+              "valueType": "string"
+            },
+            {
+              "id": "span-name",
+              "operator": "=",
+              "scope": "span",
+              "tag": "name",
+              "value": [],
+              "valueType": "string"
+            }
+          ],
+          "limit": 100,
+          "queryType": "traceqlSearch",
+          "refId": "A",
+          "tableType": "traces"
+        }
+      ],
+      "title": "Duration Batch",
       "type": "barchart"
     },
     {
@@ -282,10 +437,162 @@
         "uid": "loki"
       },
       "gridPos": {
-        "h": 8,
-        "w": 24,
+        "h": 6,
+        "w": 15,
+        "x": 9,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": false,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "builder",
+          "expr": "{job=\"apps-logs-via-otel-collector\"} |= `[flogo.` != `org_id=fake` != `pluginId=loki`",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Application Flogo Logs",
+      "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-YlRd"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 33,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 2,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
         "x": 0,
-        "y": 16
+        "y": 17
+      },
+      "id": 7,
+      "options": {
+        "barRadius": 0.15,
+        "barWidth": 0.75,
+        "colorByField": "Duration",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "startTime",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 100
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "filters": [
+            {
+              "id": "673b3f1a",
+              "operator": "=",
+              "scope": "span",
+              "value": []
+            },
+            {
+              "id": "service-name",
+              "operator": "=",
+              "scope": "resource",
+              "tag": "service.name",
+              "value": [
+                "order-app"
+              ],
+              "valueType": "string"
+            },
+            {
+              "id": "span-name",
+              "operator": "=",
+              "scope": "span",
+              "tag": "name",
+              "value": [],
+              "valueType": "string"
+            }
+          ],
+          "limit": 100,
+          "queryType": "traceqlSearch",
+          "refId": "A",
+          "tableType": "traces"
+        }
+      ],
+      "title": "Duration Flogo REST",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 15,
+        "x": 9,
+        "y": 17
       },
       "id": 1,
       "options": {
@@ -305,12 +612,12 @@
             "uid": "loki"
           },
           "editorMode": "builder",
-          "expr": "{job=\"bwce-logs-via-otel-collector\"} |= `bwEngThread` != `dsUID=loki` != `org_id=fake`",
+          "expr": "{job=\"apps-logs-via-otel-collector\"} |= `bwEngThread` != `dsUID=loki` != `org_id=fake`",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Application logs",
+      "title": "Application BWCE logs",
       "type": "logs"
     }
   ],
@@ -321,13 +628,13 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "My Dashboard - BWCE",
   "uid": "e431037e-78c2-401a-99cc-c72f94a802ff",
-  "version": 5,
+  "version": 2,
   "weekStart": ""
 }

@@ -50,6 +50,7 @@ services:
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     volumes:
       - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./dashboards/bwce-dashboard.json:/var/lib/grafana/dashboards/bwce-dashboard.json
     networks:
       - logging_net
     depends_on:
@@ -90,7 +91,7 @@ services:
       - otel_collector
 
   # 7. BWCE Application (Source)
-  app_service:
+  bwce_service:
     image: maven_test:6.12.0
     container_name: maven-test-6.12
     networks:
@@ -112,7 +113,28 @@ services:
       - C:/Users/dmassimi/containers/resources/addons/license:/data/license:ro
     ports:
       - "8080:8080"
+  # 8. Flogo Application
+  flogo_service:
+    image: my-flogo-app:1.0.0  # Replace with your actual Flogo image
+    container_name: flogo-app
+    ports:
+      - "8075:8075"
+    networks:
+      - logging_net
+    environment:
+      # Flogo OTel Configuration
+      - FLOGO_APP_PROPS_ENV=auto
+      - FLOGO_OTEL_METRICS=true
+      - LOGO_OTEL_METRICS_ATTRIBUTES="flogo_version=2.25.1"
+      - FLOGO_OTEL_TRACE=true
+      - FLOGO_OTEL_TRACE_ENABLE=true
+      - FLOGO_OTEL_TRACE_SERVICE_NAME=flogo-order-service
+      # Note: Flogo usually uses HTTP (4318) instead of gRPC
+      - FLOGO_OTEL_OTLP_ENDPOINT=http://otel_collector:4318
 
+
+    depends_on:
+      - bwce_service
 networks:
   logging_net:
     driver: bridge

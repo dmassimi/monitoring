@@ -1,7 +1,6 @@
 # BWCE Observability Stack: Logs & Traces Implementation
 
-This document outlines the architecture, configuration, and Grafana dashboard setup for monitoring BWCE applications using Fluent Bit, OpenTelemetry Collector, Loki, Tempo, and Prometheus.
-
+This document outlines the architecture, configuration, and Grafana dashboard setup for monitoring BWCE and Flogo applications using Fluent Bit, OpenTelemetry Collector, Loki, Tempo, and Prometheus.
 
 ## 1. Prerequisites & Requirements
 
@@ -9,7 +8,8 @@ Before implementing this stack, ensure the following infrastructure and software
 
 **Software Versions**
 
-- TIBCO BW6: Version 2.8.0 or higher (Required for native OpenTelemetry support)
+- TIBCO BW6: Version 2.8.0 or higher (Required for native OpenTelemetry support).
+- TIBCO Flogo: Core version compatible with OTel (Standard Flogo Enterprise 2.15+ recommended).
 - OpenTelemetry Collector: Contrib distribution (Required for the loki exporter; the core distribution does not include it).
 - Fluent Bit: Version 1.9.0+ (Required for the opentelemetry output plugin).
 - Grafana: Version 9.4+ (Recommended for full TraceQL support).
@@ -21,26 +21,25 @@ Before implementing this stack, ensure the following infrastructure and software
 
 Ensure the following ports are open within the Kubernetes cluster or host network:
 
-
 - 4317 (TCP): OTLP gRPC receiver on OTel Collector (Used by BWCE and Fluent Bit).
-- 4318 (TCP): OTLP HTTP receiver (Optional backup).
+- 4318 (TCP): OTLP HTTP receiver (Used by Flogo).
 - 3100 (TCP): Loki HTTP API (Used by OTel Collector to push logs).
 - 3200 (TCP): Tempo HTTP/gRPC (Used by OTel Collector to push traces).
 - 9090 (TCP): Prometheus HTTP API (Used by Grafana).
+- 8075 (TCP): Default Flogo App Port.
 
 **Configurations and files**
 
-- License file to start BW6 application (if version >=6.12). In this repository is mounted from local folder (volume in app-service of docker-compose)
+- License file to start BW6 application (if version >=6.12). In this repository is mounted from local folder (volume in app-service of docker-compose):
 ```yaml
 volumes:
       - C:/Users/dmassimi/containers/resources/addons/license:/data/license:ro
 ```
-- Dashboard sample in ./dashboards fodler
+- Dashboard sample in `./dashboards` folder.
 
 ## 2. Architectural Overview
 
 The following diagram illustrates the data flow from the application layer through collection and storage, ending at the visualization layer.
-
 
 ```mermaid
 graph LR
@@ -54,6 +53,7 @@ graph LR
     subgraph App_Layer [Application Layer]
         direction TB
         BWCE([BWCE App]):::app
+        FLOGO([Flogo App]):::app
     end
 
     subgraph Col_Layer [Collection Layer]
@@ -75,63 +75,50 @@ graph LR
     end
 
     %% --- Links ---
-    %% 0: Traces (Blue)
-    BWCE -- "Traces (OTLP)" --> OTEL
+    %% Traces
+    BWCE -- "Traces (gRPC)" --> OTEL
+    FLOGO -- "Traces (HTTP)" --> OTEL
     
-    %% 1: Logs File (Green/Dotted)
+    %% Logs
     BWCE -. "Logs (File)" .-> FB
-    
-    %% 2: Logs Forward (Green)
+    FLOGO -. "Logs (File)" .-> FB
     FB -- "Logs (OTLP)" --> OTEL
 
-    %% 3: Metrics (Orange)
-    BWCE -- "Metrics (OTLP)" --> OTEL
+    %% Metrics
+    BWCE -- "Metrics (gRPC)" --> OTEL
     
-    %% 4: Traces Export (Blue)
+    %% Exports
     OTEL -- "Traces (OTLP)" --> TEMPO
-    
-    %% 5: Logs Export (Green)
     OTEL -- "Logs (OTLP)" --> LOKI
-
-    %% 6: Metrics Export (Orange)
     OTEL -- "Metrics (Prom)" --> PROM
     
-    %% 7: Log Query (Green)
+    %% Queries
     GRAFANA -- "LogQL" --> LOKI
-
-    %% 8: Trace Query (Blue)
     GRAFANA -- "TraceQL" --> TEMPO
-
-    %% 9: PromQL Query (Orange)
     GRAFANA -- "PromQL" --> PROM
 
     %% --- Link Styling ---
-    %% Traces Blue
-    linkStyle 0,4,8 stroke:#2196f3,stroke-width:2px
+    %% Traces Blue (Indices 0, 1, 6, 9)
+    linkStyle 0,1,6,9 stroke:#2196f3,stroke-width:2px
     
-    %% Logs Green
-    linkStyle 1,2,5,7 stroke:#4caf50,stroke-width:2px
+    %% Logs Green (Indices 2, 3, 4, 7, 8)
+    linkStyle 2,3,4,7,8 stroke:#4caf50,stroke-width:2px
 
-    %% Metrics Orange
-    linkStyle 3,6,9 stroke:#ff9800,stroke-width:2px
+    %% Metrics Orange (Indices 5, 10)
+    linkStyle 5,10 stroke:#ff9800,stroke-width:2px
 ```
-
 
 ### Data Flow Logic
 
-1. **Traces:** BWCE sends traces directly to the OTel Collector via OTLP (gRPC/HTTP).
-
-2. **Logs:** BWCE writes logs to disk/stdout. Fluent Bit tails these files, converts them to OTLP, and forwards them to the OTel Collector.
-
-3. **Metrics:** BWCE sends metrics via OTLP to the Collector, which exposes/pushes them to **Prometheus**.
-
+1. **Traces:** BWCE sends traces via **gRPC (4317)**. Flogo sends traces via **HTTP (4318)**. Both go to the OTel Collector.
+2. **Logs:** Both apps write logs to disk/stdout. Fluent Bit tails these files, converts them to OTLP, and forwards them to the OTel Collector.
+3. **Metrics:** Both apps send metrics via OTLP to the Collector, which exposes/pushes them to **Prometheus**.
 4. **Routing:** The OTel Collector acts as a central router, sending Logs to **Loki**, Traces to **Tempo**, and Metrics to **Prometheus**.
-
 5. **Visualization:** Grafana queries Loki (LogQL), Tempo (TraceQL), and Prometheus (PromQL).
 
 ## 2. Component Configuration
 
-### A. BWCE Application (Traces)
+### A. BWCE Application
 
 *Enables the internal OpenTelemetry agent.*
 
@@ -151,7 +138,18 @@ environment:
           -Dbw.frwk.event.subscriber.instrumentation.enabled=true
 ```
 
-### B. Fluent Bit (Logs)
+### B. Flogo Application
+
+*Enables OTel tracing via environment variables.*
+
+```yaml
+environment:
+      - FLOGO_OTEL_TRACE_ENABLE=true
+      - FLOGO_OTEL_TRACE_ENDPOINT=http://otel_collector:4318
+      - FLOGO_OTEL_TRACE_SERVICE_NAME=flogo-order-service
+```
+
+### C. Fluent Bit (Logs)
 
 *Tails container logs and forwards them to OTel.*
 
@@ -172,7 +170,7 @@ environment:
     Logs_uri /v1/logs
 ```
 
-### C. OpenTelemetry Collector
+### D. OpenTelemetry Collector
 
 *Receives OTLP data and routes to backends.*
 
@@ -183,7 +181,7 @@ receivers:
   otlp:
     protocols:
       grpc: { endpoint: "0.0.0.0:4317" }
-      http: { endpoint: "0.0.0.0:4318" }
+      http: { endpoint: "0.0.0.0:4318" } # Required for Flogo
 
 exporters:
   otlp: # To Tempo
@@ -193,7 +191,7 @@ exporters:
     endpoint: "http://loki:3100/loki/api/v1/push"
   prometheus: # To Prometheus (Scrape Target)
     endpoint: "0.0.0.0:8889"
-    namespace: "bw_metrics"
+    namespace: "app_metrics" # Custom namespace
     send_timestamps: true
     metric_expiration: 180m
 
@@ -217,27 +215,9 @@ service:
 This panel filters logs for the specific Common Lib log package.
 
 * **DataSource:** Loki
-
 * **Query (LogQL):**
-
   ```logql
   {job="bwce-logs-via-otel-collector"} |= "c.t.b.p.g.Log.common-lib.Log"
-  ```
-
-* **Panel JSON Model:**
-
-  ```json
-  {
-    "type": "logs",
-    "title": "BWCE Common Lib Logs",
-    "datasource": { "uid": "${LOKI_UID}" },
-    "targets": [
-      {
-        "expr": "{job=\"bwce-logs-via-otel-collector\"} |= \"c.t.b.p.g.Log.common-lib.Log\"",
-        "refId": "A"
-      }
-    ]
-  }
   ```
 
 ### Panel 2: Traces (Tempo)
@@ -245,88 +225,31 @@ This panel filters logs for the specific Common Lib log package.
 This panel lists traces matching the specific Order Management service and "Log" activity tag.
 
 * **DataSource:** Tempo
-
 * **Query (TraceQL):**
-
   ```traceql
   { resource.service.name = "order-mgmt.application:1.0" && span.ActivityName = "Log" }
   ```
 
-* **Panel JSON Model:**
-
-  ```json
-  {
-    "type": "table",
-    "title": "Order Mgmt Traces",
-    "datasource": { "uid": "${TEMPO_UID}" },
-    "targets": [
-      {
-        "queryType": "traceql",
-        "refId": "A",
-        "expr": "{ resource.service.name = \"order-mgmt.application:1.0\" && span.ActivityName = \"Log\" }"
-      }
-    ]
-  }
-  ```
 ### Panel 3: Metrics (Prometheus)
+
 This panel shows the total number of process instances created.
 
 * **DataSource:** Prometheus
+* **Query (PromQL):**
+  ```promql
+  app_metrics_COMPLETED_JOB_COUNT{AppName="order-mgmt.application"}
+  ```
 
-* **Query** (PromQL):
-
-```promql
-bw_metrics_COMPLETED_JOB_COUNT{AppName="order-mgmt.application"}
-```
-
-* **Panel JSON Model:**
-
-```json
-{
-  "type": "stat",
-  "title": "Total Job Count",
-  "datasource": { "uid": "${PROMETHEUS_UID}" },
-  "targets": [
-    {
-      "expr": "bw_metrics_COMPLETED_JOB_COUNT{AppName=\"order-mgmt.application\"}",
-      "refId": "A",
-      "legendFormat": "{{AppName}}"
-    }
-  ]
-}
-
-```
-
-## 4. Linking Logs to Traces
-
-To enable the "Split View" feature in Grafana (clicking a log to see the trace), configure the **Loki Data Source** settings:
-
-1. Go to **Data Sources** > **Loki**.
-
-2. Scroll to **Derived Fields**.
-
-3. Add a new field:
-
-   * **Name:** `TraceID`
-
-   * **Regex:** `TraceID=(\w+)` (Adjust based on your actual log format)
-
-   * **Query:** `${__value.raw}`
-
-   * **Internal Link:** Enable this and select your **Tempo** datasource.
-
-## 5. Docker Compose Operations
+## 4. Docker Compose Operations
 
 You can run all components using the following commands:
 
 **Start the stack:**
-
 ```bash
 docker compose up -d
 ```
 
 **Stop the stack:**
-
 ```bash
 docker compose down
 ```

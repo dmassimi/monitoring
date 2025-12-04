@@ -20,7 +20,7 @@ exporters:
   # Export Metrics to Prometheus
   prometheus:
     endpoint: "0.0.0.0:8889"
-    namespace: "bw_metrics"
+    namespace: "app_metrics"
     send_timestamps: true
     metric_expiration: 180m
 
@@ -31,7 +31,7 @@ processors:
     attributes:
       - key: service.name
         action: insert
-        value: bwce-logs-via-otel-collector
+        value: apps-logs-via-otel-collector
 
 service:
   pipelines:
