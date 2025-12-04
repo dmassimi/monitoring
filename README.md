@@ -1,4 +1,4 @@
-# BWCE Observability Stack: Logs & Traces Implementation
+# BWCE/Flogo Observability Stack: Metrics, Logs & Traces Implementation
 
 This document outlines the architecture, configuration, and Grafana dashboard setup for monitoring BWCE and Flogo applications using Fluent Bit, OpenTelemetry Collector, Loki, Tempo, and Prometheus.
 
@@ -156,18 +156,40 @@ environment:
 **`fluent-bit.conf`**:
 
 ```ini
+[SERVICE]
+    Flush         1
+    Daemon        off
+    Log_Level     info
+    Parsers_File  parsers.conf
+    
 [INPUT]
-    Name              tail
-    Path              /var/log/containers/*.log
-    Parser            docker
-    Tag               kube.*
+    Name          tail
+    Tag           docker.*
+    # This path must match the mounted path in docker-compose.yaml
+    Path          /var/lib/docker/containers/*/*-json.log
+    DB            /var/log/flb_tail.db
+    Parser        docker
+    Mem_Buf_Limit 5MB
+    Skip_Long_Lines On
+    
+# --- FILTER: Essential for Docker log parsing and making records structured ---
+[FILTER]
+    Name          parser
+    Match         docker.*
+    Key_Name      log
+    Parser        json
+    Reserve_Data  On
 
+# --- OUTPUT: Send OTLP Logs to the OTEL Collector ---
 [OUTPUT]
-    Name    opentelemetry
-    Match   *
-    Host    otel-collector
-    Port    4317
-    Logs_uri /v1/logs
+    Name          opentelemetry 
+    Match         *
+    Host          otel_collector     
+    Port          4318             
+    logs_uri      /v1/logs
+    add_label     service.name apps-logs-via-otel-collector 
+    
+    Log_Response_Payload true
 ```
 
 ### D. OpenTelemetry Collector
