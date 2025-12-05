@@ -264,6 +264,10 @@ This panel shows the total number of process instances created.
   ```
 
 ## 4. Docker Compose Operations
+**IMPORTANT:** Before start docker compose you have to build Flogo and BW images. You will find in `./src` folder the source code for BW and Flogo and Dockerfile used to build them.
+
+**To build the images for both you can follow the official Tibco documentation.**
+
 
 You can run all components using the following commands:
 
