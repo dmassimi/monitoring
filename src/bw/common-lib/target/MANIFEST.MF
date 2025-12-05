@@ -1,0 +1,20 @@
+Manifest-Version: 1.0.0.202511281118
+Bundle-ManifestVersion: 2
+Bundle-Name: Common-lib Module
+Bundle-SymbolicName: common-lib
+Bundle-Version: 1.0.0.202511281118
+Bundle-Vendor: TIBCO Software Inc.
+TIBCO-BW-ConfigProfile: META-INF/default.substvar
+TIBCO-BW-SharedModule: META-INF/module.bwm
+TIBCO-BW-Edition: bwcf
+TIBCO-BW-JobSharedVariables: META-INF/module.jsv
+Require-Capability: com.tibco.bw.model; filter:="(name=bwext)",com.tibco
+ .bw.palette; filter:="(name=bw.generalactivities)"
+TIBCO-BW-ModuleSharedVariables: META-INF/module.msv
+Provide-Capability: com.tibco.bw.module; name="common-lib"; version:Vers
+ ion="1.0.0.202511281118",com.tibco.bw.schemas; ns="http://www.example.c
+ om/namespaces/tns/1763290167038",com.tibco.bw.processes; name="common-l
+ ib"
+TIBCO-BW-Version: 6.12.0 V23 2025-08-20
+Bundle-ClassPath: .
+

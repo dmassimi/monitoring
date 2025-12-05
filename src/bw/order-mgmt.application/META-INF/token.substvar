@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<repository xmlns="http://www.tibco.com/xmlns/repo/types/2002" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  	
+  <globalVariables>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.APPNODE.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.DEPLOYMENTUNIT.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.HOST.NAME</name>
+      			
+      <value>localhost</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.DEPLOYMENTUNIT.VERSION</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.MODULE.VERSION</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.CLOUD.PORT</name>
+      			
+      <value>8080</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>Integer</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt//BW.MODULE.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.APPNODE.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.DEPLOYMENTUNIT.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.HOST.NAME</name>
+      			
+      <value>localhost</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.DEPLOYMENTUNIT.VERSION</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib///log/env</name>
+      			
+      <value>PROD</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>true</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.MODULE.VERSION</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.CLOUD.PORT</name>
+      			
+      <value>8080</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>Integer</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//common-lib//BW.MODULE.NAME</name>
+      			
+      <value/>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>false</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    		
+    <globalVariable>
+      			
+      <name>//order-mgmt///order-mgmt/componentName</name>
+      			
+      <value>placeOrderMgmt</value>
+      			
+      <deploymentSettable>false</deploymentSettable>
+      			
+      <serviceSettable>false</serviceSettable>
+      			
+      <type>String</type>
+      			
+      <isOverride>true</isOverride>
+      			
+      <useLookupValue>false</useLookupValue>
+      		
+    </globalVariable>
+    	
+  </globalVariables>
+  
+</repository>

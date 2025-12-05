@@ -1,0 +1,85 @@
+{
+	"name" : "order-mgmt.application",
+	"version" : "1.0.0",
+	"type" : "bwce",
+	"defaultProfile" : "default.substvar",
+	"appProperties" : [
+		{
+			"profile" : "token.substvar",
+			"properties" : [
+			]
+		},
+		{
+			"profile" : "default.substvar",
+			"properties" : [
+			]
+		}
+	],
+	"endpoints" : [
+		{
+			"name" : "OrderMgmt",
+			"protocol" : "http",
+			"port" : "8080",
+			"sharedResourceName" : "order-mgmt.OrderMgmt",
+			"spec" : {
+				"name" : "order-mgmt.application",
+				"version" : "v1"
+			},
+			"swagger" : {
+  "swagger" : "2.0",
+  "info" : {
+    "version" : "1.0",
+    "title" : "OrderMgmt",
+    "description" : "OrderMgmt service"
+  },
+  "host" : "localhost:8080",
+  "basePath" : "/",
+  "schemes" : [ "http" ],
+  "paths" : {
+    "/order" : {
+      "get" : {
+        "summary" : "getOrderMgmt",
+        "description" : "getOrderMgmt",
+        "operationId" : "get-order",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "a Order to be returned",
+            "schema" : {
+              "$ref" : "#/definitions/Order"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "Order" : {
+      "type" : "object",
+      "required" : [ "customer" ],
+      "properties" : {
+        "customer" : {
+          "type" : "string"
+        },
+        "orderId" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "shipped" : {
+          "type" : "boolean"
+        }
+      }
+    }
+  }
+}
+		},
+		{
+			"type" : "private",
+			"pingable" : true,
+			"protocol" : "http",
+			"port" : "8090"
+		}
+	]
+}

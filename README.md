@@ -278,7 +278,7 @@ docker compose down
 ```
 
 ## 6. Sample Dashboard
-
+Samples applications Flogo and BWCE are present in `./src` folder.
 A sample dashboard is provided in the repository at `./dashboards/bwce-monitoring.json`.
 
 **To import it:**

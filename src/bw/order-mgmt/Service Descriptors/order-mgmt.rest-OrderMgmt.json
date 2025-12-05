@@ -1,0 +1,49 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "version" : "1.0",
+    "title" : "OrderMgmt",
+    "description" : "OrderMgmt service"
+  },
+  "host" : "localhost:8080",
+  "basePath" : "/",
+  "schemes" : [ "http" ],
+  "paths" : {
+    "/order" : {
+      "get" : {
+        "summary" : "getOrderMgmt",
+        "description" : "getOrderMgmt",
+        "operationId" : "get-order",
+        "consumes" : [ "application/json" ],
+        "produces" : [ "application/json" ],
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "a Order to be returned",
+            "schema" : {
+              "$ref" : "#/definitions/Order"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "Order" : {
+      "type" : "object",
+      "required" : [ "customer" ],
+      "properties" : {
+        "customer" : {
+          "type" : "string"
+        },
+        "orderId" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "shipped" : {
+          "type" : "boolean"
+        }
+      }
+    }
+  }
+}

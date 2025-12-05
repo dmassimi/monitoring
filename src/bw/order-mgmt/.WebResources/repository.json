@@ -1,0 +1,11 @@
+{
+    "records": [{
+        "name": "Cloud",
+        "items": [],
+        "url": "https://integration.cloud.tibco.com:443"
+    }],
+    "resources": [{
+        "location": "Service Descriptors/order-mgmt.rest-OrderMgmt.json",
+        "type": "generated"
+    }]
+}

@@ -1,0 +1,5 @@
+{"records": [{
+    "jsonSchemaLocation": "/order-mgmt/Service Descriptors/order-mgmt.rest-OrderMgmt.json",
+    "conversionType": "linked",
+    "xsdSchemaTargetNamespace": "http://www.example.com/namespaces/tns/1764322168714"
+}]}
