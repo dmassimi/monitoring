@@ -86,6 +86,7 @@ graph LR
 
     %% Metrics
     BWCE -- "Metrics (gRPC)" --> OTEL
+    FLOGO -- "Metrics (HTTP)" --> OTEL
     
     %% Exports
     OTEL -- "Traces (OTLP)" --> TEMPO
@@ -98,14 +99,14 @@ graph LR
     GRAFANA -- "PromQL" --> PROM
 
     %% --- Link Styling ---
-    %% Traces Blue (Indices 0, 1, 6, 9)
-    linkStyle 0,1,6,9 stroke:#2196f3,stroke-width:2px
+    %% Traces Blue (Indices 0, 1, 7, 11)
+    linkStyle 0,1,7,11 stroke:#2196f3,stroke-width:2px
     
-    %% Logs Green (Indices 2, 3, 4, 7, 8)
-    linkStyle 2,3,4,7,8 stroke:#4caf50,stroke-width:2px
+    %% Logs Green (Indices 2, 3, 4, 8, 10)
+    linkStyle 2,3,4,8,10 stroke:#4caf50,stroke-width:2px
 
-    %% Metrics Orange (Indices 5, 10)
-    linkStyle 5,10 stroke:#ff9800,stroke-width:2px
+    %% Metrics Orange (Indices 5, 6, 9, 12)
+    linkStyle 5,6,9,12 stroke:#ff9800,stroke-width:2px
 ```
 
 ### Data Flow Logic
