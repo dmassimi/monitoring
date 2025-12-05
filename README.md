@@ -266,10 +266,34 @@ This panel shows the total number of process instances created.
 ## 4. Docker Compose Operations
 **IMPORTANT:** Before start docker compose you have to build Flogo and BW images. You will find in `./src` folder the source code for BW and Flogo and Dockerfile used to build them.
 
-**To build the images for both you can follow the official Tibco documentation.**
+### Build Flogo Image
+After built flogo application from VSCode, you have to put the application binary (in my case is `order`) into `./src/flogo/` and run the `docker build` command:
+
+```bash
+docker build . -t my-flogo-app:1.0.0 
+```
+
+### Build BW Image
+For BW there are 2 steps to build image:
+
+1) Build base image
+
+To build base image go to your `TIBCO_HOME\bw\6.12\docker` and run `docker build` command:
+
+```bash
+docker build -t tibco/bwce:6.12 .
+```
+
+2) Build application Image
+
+Once you have the base image you can build application image. Go to `./src/bw` folder and put there the ear you want to add to image (in my case is `order-mgmt.application-1.0.0-SNAPSHOT.ear`) run `docker build` command:
+
+```bash
+docker build . -t my-bw-app:6.12.0 
+```
 
 
-You can run all components using the following commands:
+Now, you can run all components using the following commands:
 
 **Start the stack:**
 ```bash
