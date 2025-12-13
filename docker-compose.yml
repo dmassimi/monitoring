@@ -123,6 +123,9 @@ services:
     environment:
       # Flogo OTel Configuration
       - FLOGO_APP_PROPS_ENV=auto
+      - FLOGO_APP_METRICS_PROMETHEUS=true
+      - FLOGO_HTTP_SERVICE_PORT=7779
+      - FLOGO_APP_METRICS=true
       - FLOGO_OTEL_METRICS=true
       - LOGO_OTEL_METRICS_ATTRIBUTES="flogo_version=2.25.1"
       - FLOGO_OTEL_TRACE=true
@@ -130,6 +133,7 @@ services:
       - FLOGO_OTEL_TRACE_SERVICE_NAME=flogo-order-service
       # Note: Flogo usually uses HTTP (4318) instead of gRPC
       - FLOGO_OTEL_OTLP_ENDPOINT=http://otel_collector:4318
+      - BACKEND_URL=http://bwce_service:8080
 
 
     depends_on:

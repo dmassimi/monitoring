@@ -5,16 +5,16 @@
     "github.com/tibco/flogo-general/src/app/General/activity/shareddata",
     "github.com/project-flogo/contrib/activity/actreturn",
     "github.com/project-flogo/flow/activity/subflow",
+    "github.com/project-flogo/contrib/activity/error",
     "github.com/tibco/flogo-general/src/app/General/activity/log",
     "github.com/tibco/flogo-general/src/app/General/activity/mapper",
     "github.com/tibco/flogo-general/src/app/General/activity/rest",
-    "github.com/project-flogo/contrib/activity/error",
     "rest_1 github.com/tibco/flogo-general/src/app/General/trigger/rest",
-    "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/utils",
     "github.com/project-flogo/contrib/function/datetime",
     "github.com/project-flogo/contrib/function/string",
     "github.com/project-flogo/contrib/function/array",
+    "github.com/project-flogo/contrib/function/coerce",
     "github.com/project-flogo/contrib/function/json",
     "github.com/tibco/wi-plugins/contributions/kafka/src/app/Kafka/connector/kafka"
   ],
@@ -55,26 +55,24 @@
               "flowURI": "res://flow:MCI-SaveOrder"
             },
             "input": {
-              "body": {
+              "pathParams": {
                 "mapping": {
-                  "orderId": "=coerce.toInt($.pathParams.id)"
+                  "id": "=$.pathParams.id"
                 }
               }
             },
             "output": {
-              "data": {
+              "code": "=$.code",
+              "responseBody": {
                 "mapping": {
-                  "customer": "=$.customer",
-                  "orderId": "=$.orderId",
-                  "shipped": "=$.shipped"
+                  "body": "=$.responseBody.body"
                 }
-              },
-              "code": 200
+              }
             }
           },
           "reply": {
             "code": 200,
-            "configureResponseCodes": false,
+            "configureResponseCodes": true,
             "message": {}
           },
           "schemas": {
@@ -88,6 +86,11 @@
                 "type": "json",
                 "value": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}",
                 "fe_metadata": "{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}"
+              },
+              "responseCodesSchema": {
+                "type": "json",
+                "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"string\"},\"responseType\":{\"type\":\"string\"},\"responseSchema\":{\"type\":\"string\"},\"responseHeaders\":{\"type\":\"string\"}},\"required\":[\"code\",\"responseType\",\"responseSchema\",\"responseHeaders\"]}}",
+                "fe_metadata": "[{\"code\":\"200\",\"responseType\":\"string\",\"responseSchema\":\"\",\"responseHeaders\":\"\"},{\"code\":\"500\",\"responseType\":\"string\",\"responseSchema\":\"\",\"responseHeaders\":\"\"}]"
               }
             },
             "output": {
@@ -317,7 +320,7 @@
             "id": 2,
             "from": "gen_ctx",
             "to": "log_entry",
-            "type": "label",
+            "type": "exprOtherwise",
             "label": "genCtx to StartaSubFlow"
           },
           {
@@ -340,6 +343,14 @@
             "to": "Return1",
             "type": "label",
             "label": "log_exit to Return1"
+          },
+          {
+            "id": 6,
+            "from": "gen_ctx",
+            "to": "ThrowError",
+            "type": "expression",
+            "label": "gen_ctx to ThrowError",
+            "value": "string.equals($flow.pathParams.id,\"2\")"
           }
         ],
         "tasks": [
@@ -482,16 +493,14 @@
                 "execTimeout": 0
               },
               "input": {
-                "customer": "=$flow.body.customer",
-                "address": "=$flow.body.address",
                 "orderId": "=coerce.toInt($flow.pathParams.id)"
               },
               "schemas": {
                 "input": {
                   "input": {
                     "type": "json",
-                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"},\"customer\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"}}}",
-                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"},\"customer\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"}}}"
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"}}}",
+                    "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"}}}"
                   }
                 },
                 "output": {
@@ -536,7 +545,7 @@
                         ]
                       }
                     },
-                    "logTxt": "=string.concat(\"order details found for customer \",$flow.body.customer)",
+                    "logTxt": "=string.concat(\"order details found for customer \",$activity[main].customer)",
                     "logBodyTxt": "=coerce.toString($activity[main])"
                   }
                 }
@@ -561,15 +570,29 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "customer": "=$activity[main].customer",
-                  "orderId": "=$activity[main].orderId",
-                  "shipped": "=$activity[main].shipped"
+                  "code": 200,
+                  "responseBody": {
+                    "mapping": {
+                      "body": "=$activity[main]"
+                    }
+                  }
                 }
+              }
+            }
+          },
+          {
+            "id": "ThrowError",
+            "name": "ThrowError",
+            "description": "Throws an Error",
+            "activity": {
+              "ref": "#error",
+              "input": {
+                "message": "error in MCI"
               }
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEzOSwieSI6MTQ3fSwiZ2VuX2N0eCI6eyJ4IjoyNDgsInkiOjEzOH0sImxvZ19lbnRyeSI6eyJ4Ijo0NzIsInkiOjEzN30sIm1haW4iOnsieCI6NjYwLCJ5IjoxMzh9LCJsb2dfZXhpdCI6eyJ4Ijo4MjcsInkiOjEzOX0sIlJldHVybjEiOnsieCI6MTA5MywieSI6MTM4fX0=",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEzOSwieSI6MTQ3fSwiZ2VuX2N0eCI6eyJ4IjoyNDgsInkiOjEzOH0sImxvZ19lbnRyeSI6eyJ4Ijo0NzIsInkiOjEzN30sIm1haW4iOnsieCI6NjYwLCJ5IjoxMzh9LCJsb2dfZXhpdCI6eyJ4Ijo4MjcsInkiOjEzOX0sIlJldHVybjEiOnsieCI6MTAyMywieSI6MTM3fSwiVGhyb3dFcnJvciI6eyJ4Ijo0ODMsInkiOjMxNX19",
         "errorHandler": {
           "tasks": [
             {
@@ -595,8 +618,9 @@
                 "input": {
                   "input": {
                     "mapping": {
+                      "errorMessage": "=$error.message",
                       "errorCode": "F5X00001",
-                      "errorMessage": "=$error.message"
+                      "errorData": "=coerce.toString($error.data)"
                     }
                   }
                 },
@@ -661,7 +685,6 @@
                 "feSchemaMap": {}
               }
             },
-            
             {
               "id": "Return",
               "name": "Return",
@@ -673,7 +696,7 @@
                     "code": 500,
                     "responseBody": {
                       "mapping": {
-                        "body": "=$activity[Mapper].output"
+                        "body": "=$activity[Mapper]"
                       }
                     }
                   }
@@ -683,21 +706,28 @@
           ],
           "links": [
             {
-              "id": 6,
+              "id": 7,
               "from": "LogMessage",
               "to": "Mapper",
               "type": "label",
               "label": "LogMessage to Mapper"
             },
             {
-              "id": 7,
+              "id": 8,
               "from": "Mapper",
               "to": "log_error",
               "type": "label",
               "label": "Mapper to StartaSubFlow"
+            },
+            {
+              "id": 9,
+              "from": "log_error",
+              "to": "Return",
+              "type": "label",
+              "label": "log_error to Return"
             }
           ],
-          "fe_metadata": "eyJMb2dNZXNzYWdlIjp7IngiOjI5MCwieSI6OTR9LCJNYXBwZXIiOnsieCI6NDgwLCJ5Ijo5NX0sImxvZ19lcnJvciI6eyJ4Ijo2NzQsInkiOjkzfSwiZmx1c2giOnsieCI6ODU1LCJ5Ijo5Nn0sIlJldHVybiI6eyJ4IjoxMDc5LCJ5Ijo5Mn19"
+          "fe_metadata": "eyJMb2dNZXNzYWdlIjp7IngiOjI5MCwieSI6OTR9LCJNYXBwZXIiOnsieCI6NDgwLCJ5Ijo5NX0sImxvZ19lcnJvciI6eyJ4Ijo2NzQsInkiOjkzfSwiUmV0dXJuIjp7IngiOjEwNzksInkiOjg4fX0="
         },
         "metadata": {
           "input": [
@@ -714,15 +744,7 @@
               "type": "object",
               "schema": {
                 "type": "json",
-                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
-              }
-            },
-            {
-              "name": "body",
-              "type": "object",
-              "schema": {
-                "type": "json",
-                "value": "{\"orderId\":{\"type\":\"number\"},\"customer\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"dateOfOrder\":{\"type\":\"string\",\"format\":\"date\"}}"
+                "value": "{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}}"
               }
             },
             {
@@ -736,21 +758,21 @@
           ],
           "output": [
             {
-              "name": "customer",
-              "type": "string"
+              "name": "code",
+              "type": "integer"
             },
             {
-              "name": "orderId",
-              "type": "float64"
-            },
-            {
-              "name": "shipped",
-              "type": "boolean"
+              "name": "responseBody",
+              "type": "object",
+              "schema": {
+                "type": "json",
+                "value": "{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}"
+              }
             }
           ],
           "fe_metadata": {
-            "input": "{\"type\":\"object\",\"title\":\"ReceiveHTTPMessage\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"},\"customer\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"dateOfOrder\":{\"type\":\"string\",\"format\":\"date\"}}},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
-            "output": "{\"customer\":\"BEASTS\",\"orderId\":666,\"shipped\":true}"
+            "input": "{\"type\":\"object\",\"title\":\"ReceiveHTTPMessage\",\"properties\":{\"pathParams\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[]},\"headers\":{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]},\"requestURI\":{\"type\":\"string\",\"required\":false},\"method\":{\"type\":\"string\",\"required\":false}}}",
+            "output": "{\"type\":\"object\",\"title\":\"Inputs\",\"properties\":{\"code\":{\"type\":\"integer\",\"required\":false},\"responseBody\":{\"type\":\"object\",\"properties\":{\"body\":{\"type\":\"any\"},\"headers\":{\"type\":\"object\"}}}},\"required\":[]}"
           }
         },
         "explicitReply": true
@@ -1483,7 +1505,7 @@
             "to": "log_error",
             "type": "expression",
             "label": "InvokeRESTService to log_error",
-            "value": "$activity[InvokeRESTService].statusCode!=200"
+            "value": "$activity[InvokeRESTService].statusCode==500"
           },
           {
             "id": 6,
@@ -1554,11 +1576,14 @@
               "ref": "#rest",
               "input": {
                 "enableASR": false,
-                "swagger": "",
+                "swagger": {
+                  "filename": "order-mgmt.rest-OrderMgmt.json",
+                  "content": "data:application/json;base64,ew0KICAic3dhZ2dlciIgOiAiMi4wIiwNCiAgImluZm8iIDogew0KICAgICJ2ZXJzaW9uIiA6ICIxLjAiLA0KICAgICJ0aXRsZSIgOiAiT3JkZXJNZ210IiwNCiAgICAiZGVzY3JpcHRpb24iIDogIk9yZGVyTWdtdCBzZXJ2aWNlIg0KICB9LA0KICAiaG9zdCIgOiAibG9jYWxob3N0OjgwODAiLA0KICAiYmFzZVBhdGgiIDogIi8iLA0KICAic2NoZW1lcyIgOiBbICJodHRwIiBdLA0KICAicGF0aHMiIDogew0KICAgICIvb3JkZXIve2lkfSIgOiB7DQogICAgICAiZ2V0IiA6IHsNCiAgICAgICAgInN1bW1hcnkiIDogImdldE9yZGVyTWdtdCIsDQogICAgICAgICJkZXNjcmlwdGlvbiIgOiAiZ2V0T3JkZXJNZ210IiwNCiAgICAgICAgIm9wZXJhdGlvbklkIiA6ICJnZXQtb3JkZXIiLA0KICAgICAgICAiY29uc3VtZXMiIDogWyAiYXBwbGljYXRpb24vanNvbiIgXSwNCiAgICAgICAgInByb2R1Y2VzIiA6IFsgImFwcGxpY2F0aW9uL2pzb24iIF0sDQogICAgICAgICJwYXJhbWV0ZXJzIiA6IFsgew0KICAgICAgICAgICJuYW1lIiA6ICJpZCIsDQogICAgICAgICAgImluIiA6ICJwYXRoIiwNCiAgICAgICAgICAiZGVzY3JpcHRpb24iIDogIiIsDQogICAgICAgICAgInR5cGUiIDogInN0cmluZyIsDQogICAgICAgICAgInJlcXVpcmVkIiA6IHRydWUNCiAgICAgICAgfSBdLA0KICAgICAgICAicmVzcG9uc2VzIiA6IHsNCiAgICAgICAgICAiMjAwIiA6IHsNCiAgICAgICAgICAgICJkZXNjcmlwdGlvbiIgOiAiYSBPcmRlciB0byBiZSByZXR1cm5lZCIsDQogICAgICAgICAgICAic2NoZW1hIiA6IHsNCiAgICAgICAgICAgICAgIiRyZWYiIDogIiMvZGVmaW5pdGlvbnMvT3JkZXIiDQogICAgICAgICAgICB9DQogICAgICAgICAgfSwNCiAgICAgICAgICAiNTAwIiA6IHsNCiAgICAgICAgICAgICJkZXNjcmlwdGlvbiIgOiAiSW50ZXJuYWwgU2VydmVyIEVycm9yIiwNCiAgICAgICAgICAgICJzY2hlbWEiIDogew0KICAgICAgICAgICAgICAidHlwZSIgOiAic3RyaW5nIg0KICAgICAgICAgICAgfQ0KICAgICAgICAgIH0NCiAgICAgICAgfQ0KICAgICAgfQ0KICAgIH0NCiAgfSwNCiAgImRlZmluaXRpb25zIiA6IHsNCiAgICAiT3JkZXIiIDogew0KICAgICAgInR5cGUiIDogIm9iamVjdCIsDQogICAgICAicmVxdWlyZWQiIDogWyAiY3VzdG9tZXIiIF0sDQogICAgICAicHJvcGVydGllcyIgOiB7DQogICAgICAgICJjdXN0b21lciIgOiB7DQogICAgICAgICAgInR5cGUiIDogInN0cmluZyINCiAgICAgICAgfSwNCiAgICAgICAgIm9yZGVySWQiIDogew0KICAgICAgICAgICJ0eXBlIiA6ICJpbnRlZ2VyIiwNCiAgICAgICAgICAiZm9ybWF0IiA6ICJpbnQzMiINCiAgICAgICAgfSwNCiAgICAgICAgInNoaXBwZWQiIDogew0KICAgICAgICAgICJ0eXBlIiA6ICJib29sZWFuIg0KICAgICAgICB9DQogICAgICB9DQogICAgfQ0KICB9DQp9"
+                },
                 "authorization": false,
                 "authorizationConn": "",
                 "serviceName": "",
-                "resourcePath": "",
+                "resourcePath": "/order/{id}",
                 "Method": "GET",
                 "Uri": "=$property[\"backend.url\"]",
                 "requestType": "application/json",
@@ -1572,20 +1597,35 @@
                 "followRedirects": true,
                 "Timeout": 0,
                 "proxy": "",
-                "host": ""
+                "host": "",
+                "pathParams": {
+                  "mapping": {
+                    "id": "=coerce.toString($flow.orderId)"
+                  }
+                }
               },
               "output": {
-                "configureResponseCodes": false,
+                "configureResponseCodes": true,
                 "throwError": false,
                 "responseType": "application/json",
                 "responseOutput": "JSON Object"
               },
               "schemas": {
                 "input": {
+                  "serviceMetadata": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"swagger\":{\"type\":\"string\"},\"info\":{\"type\":\"object\",\"properties\":{\"version\":{\"type\":\"string\"},\"title\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"}}},\"host\":{\"type\":\"string\"},\"basePath\":{\"type\":\"string\"},\"schemes\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"paths\":{\"type\":\"object\",\"properties\":{\"/order/{id}\":{\"type\":\"object\",\"properties\":{\"get\":{\"type\":\"object\",\"properties\":{\"summary\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"operationId\":{\"type\":\"string\"},\"consumes\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"produces\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"parameters\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"in\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"},\"required\":{\"type\":\"boolean\"}}}},\"responses\":{\"type\":\"object\",\"properties\":{\"200\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"schema\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"required\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"properties\":{\"type\":\"object\",\"properties\":{\"customer\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"}}},\"orderId\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"format\":{\"type\":\"string\"}}},\"shipped\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"}}}}}}}}},\"500\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"schema\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"}}}}}}}}}}}}},\"definitions\":{\"type\":\"object\",\"properties\":{\"Order\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"required\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"properties\":{\"type\":\"object\",\"properties\":{\"customer\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"}}},\"orderId\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"format\":{\"type\":\"string\"}}},\"shipped\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"}}}}}}}}}}}",
+                    "fe_metadata": "{\"swagger\":\"2.0\",\"info\":{\"version\":\"1.0\",\"title\":\"OrderMgmt\",\"description\":\"OrderMgmt service\"},\"host\":\"localhost:8080\",\"basePath\":\"/\",\"schemes\":[\"http\"],\"paths\":{\"/order/{id}\":{\"get\":{\"summary\":\"getOrderMgmt\",\"description\":\"getOrderMgmt\",\"operationId\":\"get-order\",\"consumes\":[\"application/json\"],\"produces\":[\"application/json\"],\"parameters\":[{\"name\":\"id\",\"in\":\"path\",\"description\":\"\",\"type\":\"string\",\"required\":true}],\"responses\":{\"200\":{\"description\":\"a Order to be returned\",\"schema\":{\"type\":\"object\",\"required\":[\"customer\"],\"properties\":{\"customer\":{\"type\":\"string\"},\"orderId\":{\"type\":\"integer\",\"format\":\"int32\"},\"shipped\":{\"type\":\"boolean\"}}}},\"500\":{\"description\":\"Internal Server Error\",\"schema\":{\"type\":\"string\"}}}}}},\"definitions\":{\"Order\":{\"type\":\"object\",\"required\":[\"customer\"],\"properties\":{\"customer\":{\"type\":\"string\"},\"orderId\":{\"type\":\"integer\",\"format\":\"int32\"},\"shipped\":{\"type\":\"boolean\"}}}}}"
+                  },
+                  "pathParams": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"]}",
+                    "fe_metadata": "[{\"parameterName\":\"id\",\"type\":\"string\",\"required\":true}]"
+                  },
                   "headers": {
                     "type": "json",
                     "value": "{\"type\":\"object\",\"properties\":{\"Accept\":{\"type\":\"string\",\"visible\":false},\"Accept-Charset\":{\"type\":\"string\",\"visible\":false},\"Accept-Encoding\":{\"type\":\"string\",\"visible\":false},\"Authorization\":{\"type\":\"string\",\"visible\":false},\"Content-Type\":{\"type\":\"string\",\"visible\":false},\"Content-Length\":{\"type\":\"string\",\"visible\":false},\"Connection\":{\"type\":\"string\",\"visible\":false},\"Cookie\":{\"type\":\"string\",\"visible\":false},\"Pragma\":{\"type\":\"string\",\"visible\":false}},\"required\":[]}",
-                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}, {\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
+                    "fe_metadata": "[{\"parameterName\":\"Accept\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Charset\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Accept-Encoding\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Authorization\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Type\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Content-Length\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Connection\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Cookie\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false},{\"parameterName\":\"Pragma\",\"type\":\"string\",\"repeating\":\"false\",\"required\":\"false\",\"visible\":false}]"
                   },
                   "dynamicRequestHeaders": {
                     "type": "json",
@@ -1598,6 +1638,16 @@
                     "type": "json",
                     "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"customer\":{\"type\":\"string\"},\"orderId\":{\"type\":\"number\"},\"shipped\":{\"type\":\"boolean\"}}}",
                     "fe_metadata": "{\"customer\":\"BEASTS\",\"orderId\":666,\"shipped\":true}"
+                  },
+                  "responseCodes": {
+                    "type": "json",
+                    "value": "{\"type\":\"object\",\"properties\":{\"200\":{\"type\":\"object\",\"required\":[\"customer\"],\"properties\":{\"customer\":{\"type\":\"string\"},\"orderId\":{\"type\":\"integer\",\"format\":\"int32\"},\"shipped\":{\"type\":\"boolean\"}}},\"500\":{\"type\":\"string\"}}}",
+                    "fe_metadata": "{\"type\":\"object\",\"properties\":{\"200\":{\"type\":\"object\",\"required\":[\"customer\"],\"properties\":{\"customer\":{\"type\":\"string\"},\"orderId\":{\"type\":\"integer\",\"format\":\"int32\"},\"shipped\":{\"type\":\"boolean\"}}},\"500\":{\"type\":\"string\"}}}"
+                  },
+                  "responseCodesSchema": {
+                    "type": "json",
+                    "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"code\":{\"type\":\"number\"},\"responseType\":{\"type\":\"string\"},\"responseSchema\":{\"type\":\"string\"}},\"required\":[\"code\",\"responseType\"]}}",
+                    "fe_metadata": "[{\"code\":200,\"responseType\":\"object\",\"responseSchema\":\"{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"customer\\\"],\\\"properties\\\":{\\\"customer\\\":{\\\"type\\\":\\\"string\\\"},\\\"orderId\\\":{\\\"type\\\":\\\"integer\\\",\\\"format\\\":\\\"int32\\\"},\\\"shipped\\\":{\\\"type\\\":\\\"boolean\\\"}}}\"},{\"code\":500,\"responseType\":\"string\"}]"
                   },
                   "headers": {
                     "type": "json",
@@ -1631,7 +1681,7 @@
                   "mapping": {
                     "logCode": "MCO00001",
                     "logTxt": "order details found",
-                    "logBodyTxt": "=coerce.toString($activity[InvokeRESTService].responseBody)"
+                    "logBodyTxt": "coerce.toString(coerce.toString($activity[InvokeRESTService].responseCodes[\"200\"])"
                   }
                 }
               },
@@ -1655,9 +1705,9 @@
               "ref": "#actreturn",
               "settings": {
                 "mappings": {
-                  "customer": "=$activity[InvokeRESTService].responseBody.customer",
-                  "orderId": "=$activity[InvokeRESTService].responseBody.orderId",
-                  "shipped": "=$activity[InvokeRESTService].responseBody.shipped"
+                  "customer": "=$activity[InvokeRESTService].responseCodes[\"200\"].customer",
+                  "orderId": "=$activity[InvokeRESTService].responseCodes[\"200\"].orderId",
+                  "shipped": "=$activity[InvokeRESTService].responseCodes[\"200\"].shipped"
                 }
               }
             }
@@ -1683,12 +1733,12 @@
                 "logError": {
                   "mapping": {
                     "logCode": "MCO00001",
-                    "logTxt": "Error during Invoke",
                     "error": {
                       "errType": "B",
                       "errSeverity": "4",
                       "errProcessStack": "Error during invoke rest mco"
-                    }
+                    },
+                    "logTxt": "=$activity[InvokeRESTService].responseCodes[\"500\"]"
                   }
                 }
               },
@@ -1711,7 +1761,7 @@
             "activity": {
               "ref": "#error",
               "input": {
-                "message": "=string.concat(\"status \",coerce.toString($activity[InvokeRESTService].statusCode),\" received from backend. OrderId \",coerce.toString($flow.orderId),\" not found\")"
+                "message": "=$activity[InvokeRESTService].responseCodes[\"500\"]"
               }
             }
           }
@@ -1877,7 +1927,7 @@
               "input": {
                 "Log Level": "ERROR",
                 "flowInfo": false,
-                "message": "error in MCO",
+                "message": "=string.concat(\"error in MCO - \",$error[action].message)",
                 "logLevel": ""
               }
             }
@@ -1910,7 +1960,7 @@
             }
           }
         ],
-        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfSwiYWN0aW9uIjp7IngiOjMwOSwieSI6ODl9LCJMb2dNZXNzYWdlMSI6eyJ4Ijo0NjUsInkiOjI4NH0sIlRocm93RXJyb3IiOnsieCI6NjUyLCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjEyLCJ5Ijo5Nn19",
+        "fe_metadata": "eyJTdGFydEFjdGl2aXR5Ijp7IngiOjEwMCwieSI6MTAwfSwiYWN0aW9uIjp7IngiOjMwOSwieSI6ODh9LCJMb2dNZXNzYWdlMSI6eyJ4Ijo0NjUsInkiOjI4NH0sIlRocm93RXJyb3IiOnsieCI6NjUyLCJ5IjoyNzV9LCJSZXR1cm4iOnsieCI6NjEyLCJ5Ijo5Nn19",
         "errorHandler": {
           "tasks": [
             {
@@ -1956,14 +2006,6 @@
             {
               "name": "orderId",
               "type": "float64"
-            },
-            {
-              "name": "customer",
-              "type": "string"
-            },
-            {
-              "name": "address",
-              "type": "string"
             }
           ],
           "output": [
@@ -1981,7 +2023,7 @@
             }
           ],
           "fe_metadata": {
-            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"},\"customer\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"}}}",
+            "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"orderId\":{\"type\":\"number\"}}}",
             "output": "{\"customer\":\"BEASTS\",\"orderId\":666,\"shipped\":true}"
           }
         }
@@ -1997,7 +2039,7 @@
     {
       "name": "backend.url",
       "type": "string",
-      "value": "http://bwce_service:8080/order"
+      "value": "http://host.docker.internal:8080"
     }
   ],
   "schemas": {
@@ -2090,31 +2132,22 @@
                 ],
                 "responses": {
                   "200": {
-                    "description": "Rest Response",
+                    "description": "",
                     "schema": {
-                      "$ref": "#/definitions/schema1"
+                      "type": "string"
+                    }
+                  },
+                  "500": {
+                    "description": "",
+                    "schema": {
+                      "type": "string"
                     }
                   }
                 }
               }
             }
           },
-          "definitions": {
-            "schema1": {
-              "type": "object",
-              "properties": {
-                "customer": {
-                  "type": "string"
-                },
-                "orderId": {
-                  "type": "number"
-                },
-                "shipped": {
-                  "type": "boolean"
-                }
-              }
-            }
-          }
+          "definitions": {}
         }
       }
     ],

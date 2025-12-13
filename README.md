@@ -27,6 +27,7 @@ Ensure the following ports are open within the Kubernetes cluster or host networ
 - 3200 (TCP): Tempo HTTP/gRPC (Used by OTel Collector to push traces).
 - 9090 (TCP): Prometheus HTTP API (Used by Grafana).
 - 8075 (TCP): Default Flogo App Port.
+- 7779 (TCP): Flogo Prometheus Metrics Port.
 
 **Configurations and files**
 
@@ -74,24 +75,27 @@ graph LR
         GRAFANA{{Grafana}}:::viz
     end
 
-    %% --- Links ---
+    %% --- Links (0-Indexed) ---
     %% Traces
     BWCE -- "Traces (gRPC)" --> OTEL
     FLOGO -- "Traces (HTTP)" --> OTEL
     
+    %% Backend Calls
+    FLOGO -- "HTTP Call" --> BWCE
+
     %% Logs
     BWCE -. "Logs (File)" .-> FB
     FLOGO -. "Logs (File)" .-> FB
     FB -- "Logs (OTLP)" --> OTEL
 
     %% Metrics
-    BWCE -- "Metrics (gRPC)" --> OTEL
-    FLOGO -- "Metrics (HTTP)" --> OTEL
+    BWCE -- "Metrics (OTLP)" --> OTEL
+    FLOGO -- "Metrics (Scrape 7779)" --> PROM
     
     %% Exports
     OTEL -- "Traces (OTLP)" --> TEMPO
     OTEL -- "Logs (OTLP)" --> LOKI
-    OTEL -- "Metrics (Prom)" --> PROM
+    OTEL -- "Metrics (Prom 8889)" --> PROM
     
     %% Queries
     GRAFANA -- "LogQL" --> LOKI
@@ -99,23 +103,27 @@ graph LR
     GRAFANA -- "PromQL" --> PROM
 
     %% --- Link Styling ---
-    %% Traces Blue (Indices 0, 1, 7, 11)
-    linkStyle 0,1,7,11 stroke:#2196f3,stroke-width:2px
+    %% Traces Blue (0, 1, 8, 12)
+    linkStyle 0,1,8,12 stroke:#2196f3,stroke-width:2px
     
-    %% Logs Green (Indices 2, 3, 4, 8, 10)
-    linkStyle 2,3,4,8,10 stroke:#4caf50,stroke-width:2px
+    %% Service Call Grey (2)
+    linkStyle 2 stroke:#607d8b,stroke-width:2px,stroke-dasharray: 5 5
 
-    %% Metrics Orange (Indices 5, 6, 9, 12)
-    linkStyle 5,6,9,12 stroke:#ff9800,stroke-width:2px
+    %% Logs Green (3, 4, 5, 9, 11)
+    linkStyle 3,4,5,9,11 stroke:#4caf50,stroke-width:2px
+
+    %% Metrics Orange (6, 7, 10, 13)
+    linkStyle 6,7,10,13 stroke:#ff9800,stroke-width:2px
 ```
 
 ### Data Flow Logic
 
 1. **Traces:** BWCE sends traces via **gRPC (4317)**. Flogo sends traces via **HTTP (4318)**. Both go to the OTel Collector.
 2. **Logs:** Both apps write logs to disk/stdout. Fluent Bit tails these files, converts them to OTLP, and forwards them to the OTel Collector.
-3. **Metrics:** Both apps send metrics via OTLP to the Collector, which exposes/pushes them to **Prometheus**.
-4. **Routing:** The OTel Collector acts as a central router, sending Logs to **Loki**, Traces to **Tempo**, and Metrics to **Prometheus**.
-5. **Visualization:** Grafana queries Loki (LogQL), Tempo (TraceQL), and Prometheus (PromQL).
+3. **Metrics(BWCE):** BWCE sends metrics via OTLP to the OTel Collector, which exposes them on port 8889 for Prometheus to scrape.
+4. **Metrics(Flogo):** Flogo exposes metrics directly on port 7779, which Prometheus scrapes directly (bypassing OTel Collector).
+5. **Routing:** The OTel Collector acts as a central router, sending Logs to **Loki**, Traces to **Tempo**, and Metrics to **Prometheus**.
+6. **Visualization:** Grafana queries Loki (LogQL), Tempo (TraceQL), and Prometheus (PromQL).
 
 ## 2. Component Configuration
 
@@ -141,10 +149,12 @@ environment:
 
 ### B. Flogo Application
 
-*Enables OTel tracing via environment variables.*
+*Enables OTel tracing and Prometheus metrics via environment variables.*
 
 ```yaml
 environment:
+      - FLOGO_APP_METRICS_PROMETHEUS=true
+      - FLOGO_HTTP_SERVICE_PORT=7779
       - FLOGO_OTEL_TRACE_ENABLE=true
       - FLOGO_OTEL_TRACE_ENDPOINT=http://otel_collector:4318
       - FLOGO_OTEL_TRACE_SERVICE_NAME=flogo-order-service

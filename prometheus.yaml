@@ -6,3 +6,7 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets: ['otel_collector:8889']
+  - job_name: 'flogo-app-collector'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['flogo_service:7779']
