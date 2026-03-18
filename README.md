@@ -43,6 +43,18 @@ volumes:
 The following diagram illustrates the data flow from the application layer through collection and storage, ending at the visualization layer.
 
 ```mermaid
+%%{init: {
+  'theme': 'base', 
+  'look': 'handDrawn', 
+  'themeVariables': { 
+    'fontFamily': 'Comic Sans MS, cursive',
+    'primaryColor': '#ffffff',
+    'mainBkg': '#ffffff',
+    'lineColor': '#444444'
+  }
+}}%%
+
+%%{init: {'theme': 'neutral'}}%%
 graph LR
     %% --- Modern Pastel Styles ---
     classDef app fill:#e3f2fd,stroke:#2196f3,stroke-width:2px,color:#0d47a1
